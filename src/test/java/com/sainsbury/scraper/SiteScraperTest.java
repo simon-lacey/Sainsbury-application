@@ -14,7 +14,7 @@ import static org.junit.Assert.assertTrue;
 
 /**
  *
- * @author dejan
+ * @author Simon Lacey
  */
 public class SiteScraperTest {
     SiteScraper scraper;
@@ -64,4 +64,9 @@ public class SiteScraperTest {
         }
     }
 
+    @Test
+    public void testScrapeReturnsProduct() {
+        String json = scraper.findGroceries();
+        assertTrue(json.contains("Strawberries"));
+    }
 }
