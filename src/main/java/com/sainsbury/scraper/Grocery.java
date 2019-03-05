@@ -3,9 +3,10 @@ package com.sainsbury.scraper;
 import org.json.simple.JSONObject;
 
 /**
- * A simple class to hold information the web scraper needs about each product.
+ * A simple class to hold information the web scraper needs about each product
+ * and creates the jSON object from this information.
  * 
- * @author dejan
+ * @author Simon Lacey
  */
 public class Grocery {
     private String title;

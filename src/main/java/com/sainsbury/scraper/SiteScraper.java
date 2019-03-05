@@ -2,7 +2,6 @@ package com.sainsbury.scraper;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -13,13 +12,27 @@ import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * This is the main business logic implementation class.
+ * The findGroceries() method is responsible for:
+ * 1. fetching the product page
+ * 2. Creating links to all product pages
+ * 3. Producing and returning the completed JSON to the excutable class
+ *
+ * The scrape() method is responsible for
+ * 1. Creating the Document for each page
+ * 2. grabbing information from each page and
+ * 3. producing a JSON output for each page.
+ *
+ * @author Simon Lacey
+ */
+
 
 public class SiteScraper {
 
-    private static float total = 0.0f; // total unit price.
+    private static float total = 0.0f; // total unit price. Static to maintain its value following each page request
 
     private URL url;
-    private Connection con;
 
     public SiteScraper(URL url) {
         this.url = url;
@@ -34,6 +47,16 @@ public class SiteScraper {
     }
 
 
+    /**
+     * Opens a HTTP(S) connection to the given URL argUrl where the product contains the word berries,
+     * cherries, cherry or currants (only pages required to be scraped), and accepts back a JSON string of the scraped
+     * information (title, calories, unit price and product description). The total is then added to the final JSON
+     * string.
+     *
+     * @param argUrl A String object holding a page address.
+     * @return String of the JSON Object result, or null if something is obtainable.
+     */
+
     public String findGroceries() {
 
         String jsonStr = "";
@@ -43,6 +66,8 @@ public class SiteScraper {
 
             for (Element link : links) {
                 String linkText = link.text().toLowerCase();
+                //ensure each link contains the word berries,
+                //cherries, cherry or currants
                 if (linkText.contains("berries") || linkText.contains("cherries") ||
                         linkText.contains("cherry") || linkText.contains("currants")) {
 
@@ -57,6 +82,7 @@ public class SiteScraper {
             return null;
         }
 
+        //set up the json response string
         if (jsonStr.length() > 0) {
             JSONObject json = new JSONObject();
             JSONArray totalArray = new JSONArray();
@@ -69,6 +95,11 @@ public class SiteScraper {
         return null;
     }
 
+    /**
+     * Starts the scraping process, and produces JSON output for each page.
+     *
+     * @return String containing the JSON code.
+     */
     private String scrape() {
         String title = "";
         float kCal = 0.0f;
@@ -89,9 +120,10 @@ public class SiteScraper {
             Element el = doc.select("div.productSummary").first();
             if (el == null) {
                 // There is no list of products so there is no need to continue...
-                return null;
+                return "{}";
             }
-            
+
+            //find the first <h1> tag and get the product title
             title = el.getElementsByTag("h1").first().text();
 
             //get price per unit
@@ -114,7 +146,8 @@ public class SiteScraper {
                 description = el.text();
             }
 
-            // kCal of the web-page (calories per 100g)
+            // kCal of the web-page (calories per 100g). only common element is the table class id 'nutritionTable'
+            //so check each row for the word kcal
             Element nutrition = doc.getElementsByClass("nutritionTable").first();
             if (nutrition != null) {
                 Elements rows = nutrition.getElementsByTag("tr");
@@ -128,8 +161,11 @@ public class SiteScraper {
                 }
             }
 
+            // Add JSON representation of the Grocery object to JSON array.
             Grocery grocery = new Grocery(title, kCal, unitPrice, description);
             results.add(grocery.toJSON());
+
+            // Set the new total price /unit for all products.
             total += grocery.getUnitPrice();
 
         } catch (IOException ex) {
